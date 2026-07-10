@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B3N'$ M0DE1 M@KER + RIGGER</title>
+    <title>B3N'$ R1GGER PR0</title>
     <style>
         html, body {
             margin: 0;
@@ -41,7 +41,7 @@
         h3 { margin-top: 0; margin-bottom: 5px; font-size: 16px; color: #00ffff; }
         .section-title { font-size: 11px; text-transform: uppercase; color: #888; margin: 15px 0 5px 0; letter-spacing: 1px; }
         
-        .shape-grid, .texture-grid {
+        .shape-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
@@ -63,7 +63,7 @@
             transition: all 0.2s;
         }
         button:hover { background: #444; border-color: #00ffff; }
-        .shape-grid button, .texture-grid button { margin-bottom: 0; padding: 6px; font-weight: normal; }
+        .shape-grid button { margin-bottom: 0; padding: 6px; font-weight: normal; }
         .tool-btn { background: #252525; }
         .tool-btn.active { background: #00ffff; color: #000; border-color: #00ffff; }
         
@@ -92,22 +92,21 @@
             font-size: 13px;
             box-sizing: border-box;
         }
+        input[type="text"]:focus, select:focus, input[type="number"]:focus { outline: none; border-color: #00ffff; }
         
-        .file-input-label, .texture-input-label {
+        .texture-input-label {
             display: block;
             text-align: center;
-            background: #2b3a4a;
-            border: 1px solid #3b5a7a;
-            color: #88c0d0;
-            padding: 8px;
+            background: #434c5e;
+            border: 1px solid #4c566a;
+            color: #eceff4;
+            padding: 6px;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
             font-size: 12px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
-        .texture-input-label { background: #434c5e; border: 1px solid #4c566a; color: #eceff4; padding: 6px; }
-        .file-input-label:hover, .texture-input-label:hover { border-color: #00ffff; }
+        .texture-input-label:hover { border-color: #00ffff; }
 
         #instructions {
             position: absolute;
@@ -137,15 +136,6 @@
             z-index: 9999;
         }
 
-        #select-box {
-            border: 1px dashed #00ffff;
-            background: rgba(0, 255, 255, 0.15);
-            position: absolute;
-            pointer-events: none;
-            z-index: 5;
-            display: none;
-        }
-
         #render-modal {
             position: fixed;
             top: 50%;
@@ -170,24 +160,42 @@
             z-index: 999;
             display: none;
         }
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .modal-row label { color: #aaa; }
+        .modal-row input, .modal-row select { width: 55%; margin-bottom: 0; }
+        .data-display {
+            background: #111;
+            padding: 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #00ffff;
+            margin-bottom: 6px;
+            border: 1px solid #222;
+            white-space: pre-wrap;
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
     <div id="custom-cursor"></div>
-    <div id="select-box"></div>
 
     <div id="ui-container">
-        <h3>B3N'$ RIGGER</h3>
+        <h3>B3N'$ R1GGER PR0</h3>
         
-        <button style="background: #005566; border-color: #00ffff; color: #e0ffff;" onclick="openRenderModal()">🎬 Render Options</button>
+        <button style="background: #005566; border-color: #00ffff; color: #e0ffff;" onclick="openRenderModal()">🎬 Studio Render Panel</button>
 
         <div class="section-title">Rigging Toolkit</div>
         <button style="background: #5e35b1; border-color: #7e57c2;" onclick="generateRiggedCylinder()">🦴 Spawn Rigged Mesh</button>
@@ -218,26 +226,50 @@
 
         <div class="section-title">Export Actions</div>
         <input type="text" id="file-name" value="my_rigged_scene">
-        <button onclick="bundleAndDownloadZip()" style="background: #224422; border-color: #22aa22; color: #aaffaa;">↓ Export Rigged (.GLTF ZIP)</button>
+        <button onclick="bundleAndDownloadZip()" style="background: #224422; border-color: #22aa22; color: #aaffaa;">↓ Export Project ZIP</button>
         <button onclick="deleteSelected()" style="color: #ff5555; border-color: #552222; margin-top:10px;">Delete Selected</button>
     </div>
 
     <div id="modal-overlay" onclick="closeRenderModal()"></div>
     <div id="render-modal">
-        <h3>🎬 Studio Control Room</h3>
-        <button onclick="captureViewportPNG()" style="background: #00ff88; color: #000;">📷 Snapshot Canvas (.PNG)</button>
-        <button onclick="closeRenderModal()" style="background: #222; margin-top: 5px;">Back to Editor</button>
+        <h3 style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px;">🎬 Studio Control Room</h3>
+        
+        <div class="section-title" style="margin-top:0;">Camera Spatial Position Vectors</div>
+        <div id="camera-pos-box" class="data-display">X: 0.00 | Y: 0.00 | Z: 0.00</div>
+
+        <div class="section-title">Camera Rotation Matrix (Euler)</div>
+        <div id="camera-rot-box" class="data-display">X: 0.00° | Y: 0.00° | Z: 0.00°</div>
+
+        <div class="section-title">Lighting Configuration</div>
+        <div class="modal-row">
+            <label>Ambient Light</label>
+            <input type="range" id="light-ambient-val" min="0" max="2" step="0.1" value="0.7" oninput="updateEnvironmentLights()">
+        </div>
+        <div class="modal-row">
+            <label>Sun Intensity</label>
+            <input type="range" id="light-dir-val" min="0" max="3" step="0.1" value="0.8" oninput="updateEnvironmentLights()">
+        </div>
+
+        <div class="section-title">Camera Variables</div>
+        <div class="modal-row">
+            <label>Field of View</label>
+            <input type="number" id="cam-fov" min="20" max="120" value="60" onchange="updateCameraSpecs()">
+        </div>
+        <div class="modal-row">
+            <label>Studio Backdrop</label>
+            <input type="color" id="bg-color" value="#1e1e1e" oninput="updateBackdropColor()">
+        </div>
+
+        <button onclick="captureViewportPNG()" style="background: #00ff88; color: #000; font-size: 13px; margin-top: 15px; border:none;">📷 Snapshot Canvas (.PNG)</button>
+        <button onclick="closeRenderModal()" style="background: #222; border-color: #444; color:#bbb; font-size: 11px; margin-top: 5px;">Back to Editor</button>
     </div>
 
     <div id="instructions">
-        Select standard elements or use the Rigging Toolkit to interact directly with bone handles via <kbd>E</kbd> (Rotate).
+        Select elements or use Rigging Toolkit. Cycle bones and manipulate using <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> transform handles.
     </div>
 
     <script>
         const customCursor = document.getElementById('custom-cursor');
-        const selectBoxElement = document.getElementById('select-box');
-        let cursorX = window.innerWidth / 2, cursorY = window.innerHeight / 2;
-
         window.addEventListener('mousemove', (e) => {
             if (!(e.clientX < 280 && e.clientY < window.innerHeight * 0.95)) {
                 customCursor.style.left = e.clientX + 'px';
@@ -250,7 +282,7 @@
             }
         });
 
-        // 3D Engine Initialization
+        // 3D Viewport Configuration
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1e1e1e);
 
@@ -287,24 +319,21 @@
 
         // --- RIGGING AND SKINNING ENGINE ---
         function generateRiggedCylinder() {
-            // Create a multi-segment cylinder geometry for organic bending
             const segmentHeight = 1;
             const segmentCount = 4;
             const height = segmentHeight * segmentCount;
             
             const geometry = new THREE.CylinderGeometry(0.4, 0.6, height, 16, segmentCount * 4, false);
             
-            // Calculate vertex bone mapping parameters dynamically
             const position = geometry.attributes.position;
             const skinIndices = [];
             const skinWeights = [];
 
             for (let i = 0; i < position.count; i++) {
-                const y = position.getY(i) + (height / 2); // Shift values relative to floor baseline
+                const y = position.getY(i) + (height / 2);
                 const segment = Math.min(segmentCount - 1, Math.floor(y / segmentHeight));
                 const weight = (y % segmentHeight) / segmentHeight;
 
-                // Bind every vertex vertex to its neighbor bones to ensure smooth interpolation
                 skinIndices.push(segment, segment + 1, 0, 0);
                 skinWeights.push(1 - weight, weight, 0, 0);
             }
@@ -312,7 +341,6 @@
             geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
             geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
 
-            // Generate structural internal transformation joint structures
             const bones = [];
             let rootBone = new THREE.Bone();
             rootBone.position.y = -height / 2;
@@ -330,7 +358,7 @@
             const material = new THREE.MeshStandardMaterial({
                 color: 0x00ff88,
                 roughness: 0.4,
-                skinning: true, // Tell GPU shader architecture to process hardware matrices
+                skinning: true,
                 side: THREE.DoubleSide
             });
 
@@ -340,18 +368,17 @@
             skinnedMesh.add(rootBone);
             skinnedMesh.bind(skeleton);
             
-            // Generate visual helper nodes to manipulate skeleton points easily
             const skeletonHelper = new THREE.SkeletonHelper(skinnedMesh);
             skeletonHelper.material.linewidth = 3;
             scene.add(skeletonHelper);
 
             skinnedMesh.position.set(0, height / 2, 0);
+            skinnedMesh.userData.shapeType = 'rigged_cylinder';
             scene.add(skinnedMesh);
             
             selectableObjects.push(skinnedMesh);
             selectedObjects = [skinnedMesh];
             
-            // Store reference lists for user handle controls
             runningBonesList = bones;
             activeBoneIndex = 0;
             
@@ -365,7 +392,7 @@
             transformGizmo.attach(runningBonesList[activeBoneIndex]);
         }
 
-        // Standard Primitives Generator
+        // Standard Primitive Creation
         function addShape(type) {
             let geometry;
             if (type === 'cube') geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -376,6 +403,7 @@
             const material = new THREE.MeshStandardMaterial({ color: document.getElementById('shape-color').value, roughness: 0.4 });
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.set((Math.random() - 0.5) * 3, 0.5, (Math.random() - 0.5) * 3);
+            mesh.userData.shapeType = type;
             
             scene.add(mesh);
             selectableObjects.push(mesh);
@@ -417,32 +445,77 @@
             runningBonesList = [];
         }
 
-        function openRenderModal() { document.getElementById('render-modal').style.display = 'block'; document.getElementById('modal-overlay').style.display = 'block'; }
-        function closeRenderModal() { document.getElementById('render-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
+        // --- RENDER ENGINE SUBSYSTEM MODAL CONTROLS ---
+        function openRenderModal() {
+            document.getElementById('render-modal').style.display = 'block';
+            document.getElementById('modal-overlay').style.display = 'block';
+        }
+
+        function closeRenderModal() {
+            document.getElementById('render-modal').style.display = 'none';
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        // Variable Handlers
+        function updateEnvironmentLights() {
+            ambientLight.intensity = parseFloat(document.getElementById('light-ambient-val').value);
+            dirLight.intensity = parseFloat(document.getElementById('light-dir-val').value);
+        }
+
+        function updateCameraSpecs() {
+            camera.fov = parseInt(document.getElementById('cam-fov').value);
+            camera.updateProjectionMatrix();
+        }
+
+        function updateBackdropColor() {
+            scene.background.set(document.getElementById('bg-color').value);
+        }
+
         function captureViewportPNG() {
             transformGizmo.detach();
             renderer.render(scene, camera);
             const link = document.createElement('a');
-            link.download = "render.png";
+            link.download = `${getFileName()}_snapshot.png`;
             link.href = renderer.domElement.toDataURL('image/png');
             link.click();
         }
 
-        // --- INDUSTRY INTEROPERABLE EXPORT ENGINE (.GLTF/.GLB TARGET) ---
+        function getFileName() {
+            let name = document.getElementById('file-name').value.trim();
+            return name ? name : 'my_rigged_scene';
+        }
+
+        // --- FULL DUAL SAVE: .B3N DEEP METADATA + CORE .GLTF ENGINE ---
         function bundleAndDownloadZip() {
             transformGizmo.detach();
             const exporter = new THREE.GLTFExporter();
-            const filename = document.getElementById('file-name').value.trim() || 'scene';
+            const filename = getFileName();
 
-            // Pass the entire viewport scope array into the GLTF serializer
+            const zip = new JSZip();
+
+            // 1. Build structure data layer (.b3n format)
+            const b3nData = [];
+            selectableObjects.forEach(obj => {
+                if(obj.userData.shapeType) {
+                    b3nData.push({
+                        type: obj.userData.shapeType,
+                        position: obj.position.toArray(),
+                        rotation: obj.rotation.toArray(),
+                        scale: obj.scale.toArray(),
+                        color: obj.material && obj.material.color ? '#' + obj.material.color.getHexString() : '#ffffff'
+                    });
+                }
+            });
+            zip.file(`${filename}.b3n`, JSON.stringify(b3nData, null, 2));
+
+            // 2. Parse and build runtime model mesh file configuration (.gltf format)
             exporter.parse(scene, function (gltf) {
-                const zip = new JSZip();
                 zip.file(`${filename}.gltf`, JSON.stringify(gltf, null, 2));
                 
                 zip.generateAsync({ type: "blob" }).then(function (content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
-                    link.download = `${filename}_rigged.zip`;
+                    link.download = `${filename}_project.zip`;
                     link.click();
                 });
             }, function(error) { console.log(error); }, { binary: false, animations: [] });
@@ -455,12 +528,27 @@
             if (e.key === 'r' || e.key === 'R') setTool('scale');
         });
 
+        // Telemetry Update Loop
         function animate() {
             requestAnimationFrame(animate);
             orbit.update();
+            
+            // Continuous tracking updates of camera spatial position/rotation values
+            document.getElementById('camera-pos-box').innerText = 
+                `X: ${camera.position.x.toFixed(2)} | Y: ${camera.position.y.toFixed(2)} | Z: ${camera.position.z.toFixed(2)}`;
+            
+            document.getElementById('camera-rot-box').innerText = 
+                `X: ${(camera.rotation.x * (180/Math.PI)).toFixed(1)}° | Y: ${(camera.rotation.y * (180/Math.PI)).toFixed(1)}° | Z: ${(camera.rotation.z * (180/Math.PI)).toFixed(1)}°`;
+
             renderer.render(scene, camera);
         }
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
