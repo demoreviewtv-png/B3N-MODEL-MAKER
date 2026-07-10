@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B3N'$ M0DE1 M@KER</title>
+    <title>B3N'$ M0DE1 M@KER + RIGGER</title>
     <style>
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background-color: #1e1e1e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
-            cursor: none;
+            -webkit-user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
         }
         #ui-container {
             position: absolute;
@@ -19,6 +27,7 @@
             left: 20px;
             background: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
             border-radius: 12px;
@@ -28,12 +37,11 @@
             max-height: 85vh;
             overflow-y: auto;
             z-index: 10;
-            cursor: default;
         }
         h3 { margin-top: 0; margin-bottom: 5px; font-size: 16px; color: #00ffff; }
         .section-title { font-size: 11px; text-transform: uppercase; color: #888; margin: 15px 0 5px 0; letter-spacing: 1px; }
         
-        .shape-grid {
+        .shape-grid, .texture-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
@@ -55,7 +63,7 @@
             transition: all 0.2s;
         }
         button:hover { background: #444; border-color: #00ffff; }
-        .shape-grid button { margin-bottom: 0; padding: 6px; font-weight: normal; }
+        .shape-grid button, .texture-grid button { margin-bottom: 0; padding: 6px; font-weight: normal; }
         .tool-btn { background: #252525; }
         .tool-btn.active { background: #00ffff; color: #000; border-color: #00ffff; }
         
@@ -73,8 +81,8 @@
             background: transparent;
         }
 
-        input[type="text"] {
-            width: calc(100% - 16px);
+        input[type="text"], select, input[type="number"] {
+            width: 100%;
             background: #111;
             border: 1px solid #444;
             padding: 6px 8px;
@@ -82,10 +90,10 @@
             color: white;
             margin-bottom: 8px;
             font-size: 13px;
+            box-sizing: border-box;
         }
-        input[type="text"]:focus { outline: none; border-color: #00ffff; }
         
-        .file-input-label {
+        .file-input-label, .texture-input-label {
             display: block;
             text-align: center;
             background: #2b3a4a;
@@ -98,7 +106,8 @@
             font-size: 12px;
             margin-bottom: 6px;
         }
-        .file-input-label:hover { border-color: #00ffff; }
+        .texture-input-label { background: #434c5e; border: 1px solid #4c566a; color: #eceff4; padding: 6px; }
+        .file-input-label:hover, .texture-input-label:hover { border-color: #00ffff; }
 
         #instructions {
             position: absolute;
@@ -126,9 +135,7 @@
             pointer-events: none;
             transform: translate(-50%, -50%);
             z-index: 9999;
-            transition: width 0.1s, height 0.1s, background-color 0.1s;
         }
-        body:active #custom-cursor { width: 6px; height: 6px; background-color: #00ffff; }
 
         #select-box {
             border: 1px dashed #00ffff;
@@ -136,6 +143,31 @@
             position: absolute;
             pointer-events: none;
             z-index: 5;
+            display: none;
+        }
+
+        #render-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(25, 25, 25, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            width: 320px;
+            color: white;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        }
+        #modal-overlay {
+            position: fixed;
+            top:0; left:0; width:100vw; height:100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
             display: none;
         }
     </style>
@@ -153,22 +185,20 @@
     <div id="select-box"></div>
 
     <div id="ui-container">
-        <h3>B3N'$ M0DE1 M@KER</h3>
+        <h3>B3N'$ RIGGER</h3>
         
-        <div class="section-title">Add Primitive Shapes</div>
+        <button style="background: #005566; border-color: #00ffff; color: #e0ffff;" onclick="openRenderModal()">🎬 Render Options</button>
+
+        <div class="section-title">Rigging Toolkit</div>
+        <button style="background: #5e35b1; border-color: #7e57c2;" onclick="generateRiggedCylinder()">🦴 Spawn Rigged Mesh</button>
+        <button style="background: #1b5e20; border-color: #4caf50;" onclick="selectNextBone()">🔄 Cycle Selected Bone</button>
+
+        <div class="section-title">Add Primitives</div>
         <div class="shape-grid">
             <button onclick="addShape('cube')">Cube</button>
             <button onclick="addShape('sphere')">Sphere</button>
             <button onclick="addShape('cylinder')">Cylinder</button>
-            <button onclick="addShape('cone')">Cone</button>
-            <button onclick="addShape('torus')">Torus (Donut)</button>
             <button onclick="addShape('capsule')">Capsule</button>
-            <button onclick="addShape('knot')">Torus Knot</button>
-            <button onclick="addShape('dodecahedron')">Dodecahedron</button>
-            <button onclick="addShape('octahedron')">Octahedron</button>
-            <button onclick="addShape('icosahedron')">Icosahedron</button>
-            <button onclick="addShape('tetrahedron')">Tetrahedron</button>
-            <button onclick="addShape('ring')">Ring Plane</button>
         </div>
 
         <div class="section-title">Transform Tools</div>
@@ -176,75 +206,71 @@
         <button id="tool-rotate" class="tool-btn" onclick="setTool('rotate')">Rotate (E)</button>
         <button id="tool-scale" class="tool-btn" onclick="setTool('scale')">Scale (R)</button>
         
-        <div class="section-title">Paint Property</div>
+        <div class="section-title">Material Properties</div>
         <div class="color-picker-wrapper">
             <input type="color" id="shape-color" value="#00ff88">
-            <span style="font-size: 12px;">Object Color</span>
+            <span>Object Color</span>
         </div>
 
-        <div class="section-title">Import 3D / Files</div>
-        <label class="file-input-label" for="file-import">📂 Import (.gltf, .glb, .b3n)</label>
-        <input type="file" id="file-import" accept=".gltf,.glb,.json,.b3n" style="display:none;" onchange="handleFileImport(event)">
+        <div class="section-title">Texturing Suite</div>
+        <label class="texture-input-label" for="texture-upload">🖼️ Upload Custom Image</label>
+        <input type="file" id="texture-upload" accept="image/*" style="display:none;" onchange="handleCustomTextureUpload(event)">
 
-        <div class="section-title">Export / Save Actions</div>
-        <label style="font-size: 11px; color:#aaa; display:block; margin-bottom:4px;">Project Name</label>
-        <input type="text" id="file-name" value="my_3d_scene">
-        
-        <button onclick="bundleAndDownloadZip()" style="background: #224422; border-color: #22aa22; color: #aaffaa; margin-bottom: 4px;">↓ Download Project ZIP</button>
-        <button onclick="deleteSelected()" style="color: #ff5555; border-color: #552222; font-size: 11px; margin-top:10px;">Delete Selected</button>
+        <div class="section-title">Export Actions</div>
+        <input type="text" id="file-name" value="my_rigged_scene">
+        <button onclick="bundleAndDownloadZip()" style="background: #224422; border-color: #22aa22; color: #aaffaa;">↓ Export Rigged (.GLTF ZIP)</button>
+        <button onclick="deleteSelected()" style="color: #ff5555; border-color: #552222; margin-top:10px;">Delete Selected</button>
+    </div>
+
+    <div id="modal-overlay" onclick="closeRenderModal()"></div>
+    <div id="render-modal">
+        <h3>🎬 Studio Control Room</h3>
+        <button onclick="captureViewportPNG()" style="background: #00ff88; color: #000;">📷 Snapshot Canvas (.PNG)</button>
+        <button onclick="closeRenderModal()" style="background: #222; margin-top: 5px;">Back to Editor</button>
     </div>
 
     <div id="instructions">
-        Drag Box to Multi-Select | Hold <kbd>Shift</kbd> + Click to Add | <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> Tools | <kbd>Arrows</kbd> Orbit | <kbd>Shift+Arrows</kbd> Pan
+        Select standard elements or use the Rigging Toolkit to interact directly with bone handles via <kbd>E</kbd> (Rotate).
     </div>
 
     <script>
         const customCursor = document.getElementById('custom-cursor');
-        const uiContainer = document.getElementById('ui-container');
         const selectBoxElement = document.getElementById('select-box');
-        
-        let cursorX = window.innerWidth / 2;
-        let cursorY = window.innerHeight / 2;
-
-        function updateCursorVisual(x, y) {
-            cursorX = x;
-            cursorY = y;
-            customCursor.style.left = cursorX + 'px';
-            customCursor.style.top = cursorY + 'px';
-        }
-        updateCursorVisual(cursorX, cursorY);
+        let cursorX = window.innerWidth / 2, cursorY = window.innerHeight / 2;
 
         window.addEventListener('mousemove', (e) => {
-            if (!(e.clientX < 280 && e.clientY < window.innerHeight * 0.9)) {
-                updateCursorVisual(e.clientX, e.clientY);
+            if (!(e.clientX < 280 && e.clientY < window.innerHeight * 0.95)) {
+                customCursor.style.left = e.clientX + 'px';
+                customCursor.style.top = e.clientY + 'px';
+                document.body.style.cursor = 'none';
+                customCursor.style.display = 'block';
+            } else {
+                document.body.style.cursor = 'default';
+                customCursor.style.display = 'none';
             }
         });
 
-        uiContainer.addEventListener('mouseenter', () => { customCursor.style.display = 'none'; });
-        uiContainer.addEventListener('mouseleave', () => { customCursor.style.display = 'block'; });
-
-        // 1. Scene setup
+        // 3D Engine Initialization
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1e1e1e);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(5, 6, 8);
+        camera.position.set(4, 5, 6);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         const gridHelper = new THREE.GridHelper(20, 20, 0x00ffff, 0x444444);
         scene.add(gridHelper);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 15, 10);
+        dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
 
-        // 2. Control Interactivity Setup
         const orbit = new THREE.OrbitControls(camera, renderer.domElement);
         orbit.enableDamping = true;
         orbit.target.set(0, 1, 0);
@@ -252,190 +278,127 @@
 
         const transformGizmo = new THREE.TransformControls(camera, renderer.domElement);
         scene.add(transformGizmo);
+        transformGizmo.addEventListener('dragging-changed', (e) => orbit.enabled = !e.value);
 
-        transformGizmo.addEventListener('change', () => renderer.render(scene, camera));
-        transformGizmo.addEventListener('dragging-changed', (event) => {
-            orbit.enabled = !event.value;
-        });
-
-        orbit.addEventListener('change', () => {
-            if (orbit.enabled === true) {
-                updateCursorVisual(window.innerWidth / 2, window.innerHeight / 2);
-            }
-        });
-
-        // 3. Multi-Selection Tracking & Opacity Engine
         const selectableObjects = [];
-        let selectedObjects = []; // Converted to array for tracking multiple items
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        const colorPicker = document.getElementById('shape-color');
+        let selectedObjects = [];
+        let runningBonesList = [];
+        let activeBoneIndex = -1;
 
-        let isDraggingSelection = false;
-        let dragStartPos = { x: 0, y: 0 };
-        let isShiftDown = false;
-
-        window.addEventListener('keydown', (e) => { if(e.key === 'Shift') isShiftDown = true; });
-        window.addEventListener('keyup', (e) => { if(e.key === 'Shift') isShiftDown = false; });
-
-        window.addEventListener('pointerdown', (e) => {
-            if (e.clientX < 280 && e.clientY < window.innerHeight * 0.9) return; 
-            if (e.button !== 0) return; 
-            if (transformGizmo.dragging) return;
-
-            isDraggingSelection = true;
-            dragStartPos.x = e.clientX;
-            dragStartPos.y = e.clientY;
-
-            selectBoxElement.style.left = e.clientX + 'px';
-            selectBoxElement.style.top = e.clientY + 'px';
-            selectBoxElement.style.width = '0px';
-            selectBoxElement.style.height = '0px';
-            selectBoxElement.style.display = 'block';
-        });
-
-        window.addEventListener('pointermove', (e) => {
-            if (!isDraggingSelection) return;
-            const currentX = e.clientX;
-            const currentY = e.clientY;
-
-            selectBoxElement.style.left = Math.min(dragStartPos.x, currentX) + 'px';
-            selectBoxElement.style.top = Math.min(dragStartPos.y, currentY) + 'px';
-            selectBoxElement.style.width = Math.abs(dragStartPos.x - currentX) + 'px';
-            selectBoxElement.style.height = Math.abs(dragStartPos.y - currentY) + 'px';
-        });
-
-        window.addEventListener('pointerup', (e) => {
-            if (!isDraggingSelection) return;
-            isDraggingSelection = false;
-            selectBoxElement.style.display = 'none';
-
-            const boxWidth = Math.abs(dragStartPos.x - e.clientX);
-            const boxHeight = Math.abs(dragStartPos.y - e.clientY);
-
-            if (boxWidth < 6 && boxHeight < 6) {
-                targetSelectionRay(e.clientX, e.clientY, isShiftDown);
-                return;
-            }
-
-            if (!isShiftDown) selectedObjects = [];
-
-            const xMin = Math.min(dragStartPos.x, e.clientX);
-            const xMax = Math.max(dragStartPos.x, e.clientX);
-            const yMin = Math.min(dragStartPos.y, e.clientY);
-            const yMax = Math.max(dragStartPos.y, e.clientY);
-
-            selectableObjects.forEach(obj => {
-                const screenPos = getScreenCoords(obj);
-                if (screenPos.x >= xMin && screenPos.x <= xMax && screenPos.y >= yMin && screenPos.y <= yMax) {
-                    if (!selectedObjects.includes(obj)) selectedObjects.push(obj);
-                }
-            });
-
-            applySelectionVisuals();
-        });
-
-        function targetSelectionRay(clientX, clientY, appendMode) {
-            mouse.x = (clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(selectableObjects, true);
-
-            if (!appendMode) selectedObjects = [];
-
-            if (intersects.length > 0) {
-                let rootObj = intersects[0].object;
-                while (rootObj.parent && rootObj.parent !== scene) {
-                    rootObj = rootObj.parent;
-                }
-                
-                if (appendMode && selectedObjects.includes(rootObj)) {
-                    selectedObjects = selectedObjects.filter(item => item !== rootObj);
-                } else {
-                    if (!selectedObjects.includes(rootObj)) selectedObjects.push(rootObj);
-                }
-            }
-            applySelectionVisuals();
-        }
-
-        // Handles attaching gizmos and modifying environmental opacity configurations
-        function applySelectionVisuals() {
-            transformGizmo.detach();
+        // --- RIGGING AND SKINNING ENGINE ---
+        function generateRiggedCylinder() {
+            // Create a multi-segment cylinder geometry for organic bending
+            const segmentHeight = 1;
+            const segmentCount = 4;
+            const height = segmentHeight * segmentCount;
             
-            if (selectedObjects.length > 0) {
-                // Attach transform handles directly onto the most recently selected item
-                transformGizmo.attach(selectedObjects[selectedObjects.length - 1]);
-                
-                const lead = selectedObjects[0];
-                if (lead.material && lead.material.color) {
-                    colorPicker.value = '#' + lead.material.color.getHexString();
-                }
+            const geometry = new THREE.CylinderGeometry(0.4, 0.6, height, 16, segmentCount * 4, false);
+            
+            // Calculate vertex bone mapping parameters dynamically
+            const position = geometry.attributes.position;
+            const skinIndices = [];
+            const skinWeights = [];
+
+            for (let i = 0; i < position.count; i++) {
+                const y = position.getY(i) + (height / 2); // Shift values relative to floor baseline
+                const segment = Math.min(segmentCount - 1, Math.floor(y / segmentHeight));
+                const weight = (y % segmentHeight) / segmentHeight;
+
+                // Bind every vertex vertex to its neighbor bones to ensure smooth interpolation
+                skinIndices.push(segment, segment + 1, 0, 0);
+                skinWeights.push(1 - weight, weight, 0, 0);
             }
 
-            // Update workspace fade opacities
-            selectableObjects.forEach(obj => {
-                const isSelected = selectedObjects.includes(obj);
-                obj.traverse(child => {
-                    if (child.isMesh && child.material) {
-                        child.material.transparent = true;
-                        // Keep selections fully solid, drop environmental objects to 25% visibility
-                        child.material.opacity = (selectedObjects.length === 0 || isSelected) ? 1.0 : 0.25;
-                    }
-                });
+            geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+            geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
+
+            // Generate structural internal transformation joint structures
+            const bones = [];
+            let rootBone = new THREE.Bone();
+            rootBone.position.y = -height / 2;
+            bones.push(rootBone);
+
+            let lastBone = rootBone;
+            for (let i = 0; i < segmentCount; i++) {
+                const bone = new THREE.Bone();
+                bone.position.y = segmentHeight;
+                lastBone.add(bone);
+                bones.push(bone);
+                lastBone = bone;
+            }
+
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x00ff88,
+                roughness: 0.4,
+                skinning: true, // Tell GPU shader architecture to process hardware matrices
+                side: THREE.DoubleSide
             });
+
+            const skinnedMesh = new THREE.SkinnedMesh(geometry, material);
+            const skeleton = new THREE.Skeleton(bones);
+            
+            skinnedMesh.add(rootBone);
+            skinnedMesh.bind(skeleton);
+            
+            // Generate visual helper nodes to manipulate skeleton points easily
+            const skeletonHelper = new THREE.SkeletonHelper(skinnedMesh);
+            skeletonHelper.material.linewidth = 3;
+            scene.add(skeletonHelper);
+
+            skinnedMesh.position.set(0, height / 2, 0);
+            scene.add(skinnedMesh);
+            
+            selectableObjects.push(skinnedMesh);
+            selectedObjects = [skinnedMesh];
+            
+            // Store reference lists for user handle controls
+            runningBonesList = bones;
+            activeBoneIndex = 0;
+            
+            transformGizmo.attach(runningBonesList[activeBoneIndex]);
+            setTool('rotate');
         }
 
-        function getScreenCoords(object) {
-            const vector = new THREE.Vector3();
-            object.updateMatrixWorld();
-            vector.setFromMatrixPosition(object.matrixWorld);
-            vector.project(camera);
-            return {
-                x: (vector.x * .5 + .5) * window.innerWidth,
-                y: (-(vector.y * .5) + .5) * window.innerHeight
-            };
+        function selectNextBone() {
+            if (runningBonesList.length === 0) return;
+            activeBoneIndex = (activeBoneIndex + 1) % runningBonesList.length;
+            transformGizmo.attach(runningBonesList[activeBoneIndex]);
         }
 
+        // Standard Primitives Generator
         function addShape(type) {
             let geometry;
-            if (type === 'cube') { geometry = new THREE.BoxGeometry(1.2, 1.2, 1.2); geometry.translate(0, 0.6, 0); } 
-            else if (type === 'sphere') { geometry = new THREE.SphereGeometry(0.7, 32, 32); geometry.translate(0, 0.7, 0); } 
-            else if (type === 'cylinder') { geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.4, 32); geometry.translate(0, 0.7, 0); }
-            else if (type === 'cone') { geometry = new THREE.ConeGeometry(0.6, 1.4, 32); geometry.translate(0, 0.7, 0); }
-            else if (type === 'torus') { geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100); geometry.translate(0, 0.7, 0); }
-            else if (type === 'capsule') { geometry = new THREE.CapsuleGeometry(0.4, 0.8, 8, 16); geometry.translate(0, 0.8, 0); }
-            else if (type === 'knot') { geometry = new THREE.TorusKnotGeometry(0.4, 0.12, 64, 8); geometry.translate(0, 0.6, 0); }
-            else if (type === 'dodecahedron') { geometry = new THREE.DodecahedronGeometry(0.7); geometry.translate(0, 0.7, 0); }
-            else if (type === 'octahedron') { geometry = new THREE.OctahedronGeometry(0.7); geometry.translate(0, 0.7, 0); }
-            else if (type === 'icosahedron') { geometry = new THREE.IcosahedronGeometry(0.7); geometry.translate(0, 0.7, 0); }
-            else if (type === 'tetrahedron') { geometry = new THREE.TetrahedronGeometry(0.7); geometry.translate(0, 0.6, 0); }
-            else if (type === 'ring') { geometry = new THREE.RingGeometry(0.3, 0.8, 32); geometry.translate(0, 0.1, 0); geometry.rotateX(-Math.PI / 2); }
+            if (type === 'cube') geometry = new THREE.BoxGeometry(1, 1, 1);
+            else if (type === 'sphere') geometry = new THREE.SphereGeometry(0.6, 32, 32);
+            else if (type === 'cylinder') geometry = new THREE.CylinderGeometry(0.5, 0.5, 1.2, 32);
+            else if (type === 'capsule') geometry = new THREE.CapsuleGeometry(0.4, 0.8, 8, 16);
 
-            const material = new THREE.MeshStandardMaterial({ 
-                color: new THREE.Color(colorPicker.value),
-                roughness: 0.4,
-                metalness: 0.1
-            });
-            
+            const material = new THREE.MeshStandardMaterial({ color: document.getElementById('shape-color').value, roughness: 0.4 });
             const mesh = new THREE.Mesh(geometry, material);
-            mesh.userData.shapeType = type; 
-            mesh.position.set((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4);
+            mesh.position.set((Math.random() - 0.5) * 3, 0.5, (Math.random() - 0.5) * 3);
             
             scene.add(mesh);
             selectableObjects.push(mesh);
-            
             selectedObjects = [mesh];
-            applySelectionVisuals();
+            transformGizmo.attach(mesh);
         }
 
-        colorPicker.addEventListener('input', (e) => {
-            selectedObjects.forEach(obj => {
-                obj.traverse(child => {
-                    if(child.isMesh && child.material) child.material.color.set(e.target.value);
+        function handleCustomTextureUpload(event) {
+            if (selectedObjects.length === 0) return;
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const loader = new THREE.TextureLoader();
+                loader.load(e.target.result, (texture) => {
+                    selectedObjects[0].material.map = texture;
+                    selectedObjects[0].material.color.set("#ffffff");
+                    selectedObjects[0].material.needsUpdate = true;
                 });
-            });
-        });
+            };
+            reader.readAsDataURL(file);
+        }
 
         function setTool(mode) {
             transformGizmo.setMode(mode);
@@ -451,143 +414,45 @@
                 if (index > -1) selectableObjects.splice(index, 1);
             });
             selectedObjects = [];
-            applySelectionVisuals();
+            runningBonesList = [];
         }
 
-        // 4. File Imports Management
-        function handleFileImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const filename = file.name.toLowerCase();
-            const reader = new FileReader();
-
-            if (filename.endsWith('.json') || filename.endsWith('.b3n')) {
-                reader.onload = function(e) {
-                    try {
-                        const projectData = JSON.parse(e.target.result);
-                        transformGizmo.detach();
-                        selectableObjects.forEach(obj => scene.remove(obj));
-                        selectableObjects.length = 0;
-                        selectedObjects = [];
-
-                        projectData.forEach(data => {
-                            addShape(data.type);
-                            const current = selectedObjects[0];
-                            current.position.fromArray(data.position);
-                            current.rotation.fromArray(data.rotation);
-                            current.scale.fromArray(data.scale);
-                            current.material.color.set(data.color);
-                        });
-                        selectedObjects = [];
-                        applySelectionVisuals();
-                    } catch(err) { alert("Invalid .B3N Project File Structure"); }
-                };
-                reader.readAsText(file);
-            } 
-            else if (filename.endsWith('.gltf') || filename.endsWith('.glb')) {
-                reader.onload = function(e) {
-                    const contents = e.target.result;
-                    const loader = new THREE.GLTFLoader();
-                    loader.parse(contents, '', function(gltf) {
-                        const importedScene = gltf.scene;
-                        importedScene.position.set(0,0,0);
-                        scene.add(importedScene);
-                        selectableObjects.push(importedScene);
-                        selectedObjects = [importedScene];
-                        applySelectionVisuals();
-                    }, function(error){ alert("Error Parsing GLTF file structure"); });
-                };
-                reader.readAsArrayBuffer(file);
-            }
+        function openRenderModal() { document.getElementById('render-modal').style.display = 'block'; document.getElementById('modal-overlay').style.display = 'block'; }
+        function closeRenderModal() { document.getElementById('render-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
+        function captureViewportPNG() {
+            transformGizmo.detach();
+            renderer.render(scene, camera);
+            const link = document.createElement('a');
+            link.download = "render.png";
+            link.href = renderer.domElement.toDataURL('image/png');
+            link.click();
         }
 
+        // --- INDUSTRY INTEROPERABLE EXPORT ENGINE (.GLTF/.GLB TARGET) ---
         function bundleAndDownloadZip() {
             transformGizmo.detach();
-            const zip = new JSZip();
-            const filename = getFileName();
-
-            const b3nData = [];
-            selectableObjects.forEach(obj => {
-                if(obj.userData.shapeType) { 
-                    b3nData.push({
-                        type: obj.userData.shapeType,
-                        position: obj.position.toArray(),
-                        rotation: obj.rotation.toArray(),
-                        scale: obj.scale.toArray(),
-                        color: '#' + obj.material.color.getHexString()
-                    });
-                }
-            });
-            zip.file(`${filename}.b3n`, JSON.stringify(b3nData, null, 2));
-
-            const readmeText = `========================================================================\n B3N'$ M0DE1 M@KER - PROJECT OVERVIEW\n========================================================================\n\nProject Name: ${filename}`;
-            zip.file("README.txt", readmeText);
-
             const exporter = new THREE.GLTFExporter();
-            const exportTarget = new THREE.Group();
-            selectableObjects.forEach(obj => exportTarget.add(obj.clone()));
+            const filename = document.getElementById('file-name').value.trim() || 'scene';
 
-            exporter.parse(exportTarget, function (gltf) {
+            // Pass the entire viewport scope array into the GLTF serializer
+            exporter.parse(scene, function (gltf) {
+                const zip = new JSZip();
                 zip.file(`${filename}.gltf`, JSON.stringify(gltf, null, 2));
-                zip.generateAsync({type:"blob"}).then(function(content) {
+                
+                zip.generateAsync({ type: "blob" }).then(function (content) {
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(content);
-                    link.download = `${filename}_project.zip`;
+                    link.download = `${filename}_rigged.zip`;
                     link.click();
-                    applySelectionVisuals();
                 });
-            }, function(error){ 
-                console.error(error); 
-                applySelectionVisuals();
-            });
+            }, function(error) { console.log(error); }, { binary: false, animations: [] });
         }
 
-        function getFileName() {
-            let name = document.getElementById('file-name').value.trim();
-            return name ? name : 'my_3d_scene';
-        }
-
-        // 5. Keyboard Navigation Engine
         window.addEventListener('keydown', (e) => {
-            if (document.activeElement.tagName === 'INPUT') return; 
-
-            const panSpeed = 0.25;
-            const rotateSpeed = 0.08;
-
-            switch (e.key) {
-                case 'Enter':
-                    targetSelectionRay(cursorX, cursorY, isShiftDown);
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (e.shiftKey) orbit.pan(0, panSpeed);
-                    else orbit.target.y += 0.1;
-                    orbit.update();
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (e.shiftKey) orbit.pan(0, -panSpeed);
-                    else orbit.target.y -= 0.1;
-                    orbit.update();
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    if (e.shiftKey) orbit.pan(-panSpeed, 0);
-                    else orbit.rotateLeft(rotateSpeed);
-                    orbit.update();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    if (e.shiftKey) orbit.pan(panSpeed, 0);
-                    else orbit.rotateLeft(-rotateSpeed);
-                    orbit.update();
-                    break;
-
-                case 'w': case 'W': setTool('translate'); break;
-                case 'e': case 'E': setTool('rotate'); break;
-                case 'r': case 'R': setTool('scale'); break;
-                case 'delete': case 'Backspace': deleteSelected(); break;
-            }
+            if (document.activeElement.tagName === 'INPUT') return;
+            if (e.key === 'w' || e.key === 'W') setTool('translate');
+            if (e.key === 'e' || e.key === 'E') setTool('rotate');
+            if (e.key === 'r' || e.key === 'R') setTool('scale');
         });
 
         function animate() {
@@ -595,14 +460,6 @@
             orbit.update();
             renderer.render(scene, camera);
         }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        addShape('cube');
         animate();
     </script>
 </body>
